@@ -27,21 +27,23 @@ class AclSet:
 
 	def parse_rules(self, rules, is_parent):
 		for rule in rules:
-			if rule.startswith('r:') or rule.startswith('reset:'):
+			category, body = rule.split(':', 1)
+			if category in ('r', 'reset'):
 				self.reset = True
-			elif rule.startswith('l:'):
+				return
+			if category in ('l', 'local'):
 				if not is_parent:
-					self.parse_rule(rule[2:], False)
-			elif rule.startswith('local:'):
-				if not is_parent:
-					self.parse_rule(rule[6:], False)
-			elif (rule.startswith('u:') or rule.startswith('user:')
-			or rule.startswith('g:') or rule.startswith('group:')
-			or rule.startswith('o:') or rule.startswith('other:')
-			or rule.startswith('m:') or rule.startswith('mask:')):
+					self.parse_rule(body, False)
+				return
+			if category in (
+				'u', 'user',
+				'g', 'group',
+				'o', 'other',
+				'm', 'mask',
+			):
 				self.parse_rule(rule, True)
-			else:
-				raise Exception('Unknown rule '+rule)
+				return
+		raise Exception('Unknown rule '+rule)
 
 	def parse_rule(self, rule, recursive):
 		if re.match('^(u(ser)?|g(roup)?|o(ther)?|m(ask)?):[a-z0-9-\\\\]*:([rwxX]+|[0-7]{1,3})$', rule):
